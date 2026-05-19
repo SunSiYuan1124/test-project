@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>班级作业单</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Class Homework Board</p>
+          <h1>班级作业单</h1>
+        </div>
+        <div class="summary">
+          <span>{{ pendingCount }} 项待完成</span>
+          <strong>{{ completionRate }}%</strong>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel form-panel" aria-labelledby="form-title">
+          <h2 id="form-title">发布作业</h2>
+          <form @submit.prevent="createAssignment" class="assignment-form">
+            <label>
+              <span>科目</span>
+              <input v-model.trim="form.subject" placeholder="例如：数学" required />
+            </label>
+            <label>
+              <span>标题</span>
+              <input v-model.trim="form.title" placeholder="例如：练习册 P36-P38" required />
+            </label>
+            <label>
+              <span>截止日期</span>
+              <input v-model="form.dueDate" type="date" required />
+            </label>
+            <label>
+              <span>说明</span>
+              <textarea v-model.trim="form.description" rows="4" placeholder="补充要求、提交方式或提醒"></textarea>
+            </label>
+            <p class="error" v-if="error">{{ error }}</p>
+            <button type="submit" :disabled="saving">{{ saving ? "发布中..." : "发布作业" }}</button>
+          </form>
+        </section>
+
+        <section class="board" aria-label="作业列表">
+          <div class="toolbar">
+            <div class="tabs" role="tablist" aria-label="筛选作业">
+              <button :class="{ active: filter === 'all' }" @click="filter = 'all'">全部</button>
+              <button :class="{ active: filter === 'todo' }" @click="filter = 'todo'">待完成</button>
+              <button :class="{ active: filter === 'done' }" @click="filter = 'done'">已完成</button>
+            </div>
+            <input v-model.trim="keyword" class="search" placeholder="搜索科目或标题" />
+          </div>
+
+          <div class="empty" v-if="filteredAssignments.length === 0">
+            暂时没有符合条件的作业。
+          </div>
+
+          <article
+            v-for="item in filteredAssignments"
+            :key="item.id"
+            class="assignment-card"
+            :class="{ done: item.status === 'done', urgent: isUrgent(item.dueDate) && item.status !== 'done' }"
+          >
+            <div class="card-main">
+              <div class="subject-row">
+                <span class="subject">{{ item.subject }}</span>
+                <time :datetime="item.dueDate">截止 {{ formatDate(item.dueDate) }}</time>
+              </div>
+              <h3>{{ item.title }}</h3>
+              <p v-if="item.description">{{ item.description }}</p>
+            </div>
+            <div class="actions">
+              <button class="ghost" @click="toggleStatus(item)">
+                {{ item.status === "done" ? "设为待完成" : "完成" }}
+              </button>
+              <button class="danger" @click="removeAssignment(item.id)">删除</button>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
